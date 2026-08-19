@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Werkstatt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #101319;
+  --panel: #171B22;
+  --raised: #1D222B;
+  --inset: #0B0E13;
+  --line: #262C36;
+  --text: #E2E7ED;
+  --muted: #838E9E;
+  --signal: #E3402C;
+  --steel: #6E8CA8;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; margin: 0; }
+body {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Kopfleiste */
+.head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+.mark {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 700; font-size: 15px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  margin: 0;
+}
+.sub {
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); margin: 1px 0 0; font-weight: 500;
+}
+.spacer { flex: 1 1 auto; }
+.tell {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted);
+}
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--steel); flex: 0 0 auto; }
+.dot.busy { background: var(--signal); animation: pulse 1s steps(2, end) infinite; }
+.dot.err { background: var(--signal); }
+@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.15 } }
+
+.btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 6px 9px;
+  cursor: pointer;
+}
+.btn:disabled { opacity: 0.35; }
+
+/* Log */
+.log { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 4px 0 28px; }
+.entry {
+  padding: 16px 16px 16px 15px;
+  border-bottom: 1px solid var(--line);
+  border-left: 3px solid transparent;
+}
+.entry.user { border-left-color: var(--signal); background: var(--panel); }
+.entry.ai { border-left-color: var(--line); }
+.entry.err { border-left-color: var(--signal); background: rgba(227,64,44,0.06); }
+.role {
+  font-family: 'Archivo', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 7px;
+}
+.entry.user .role, .entry.err .role { color: var(--signal); }
+.body { white-space: pre-wrap; word-break: break-word; }
+.body.err { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+
+.caret {
+  display: inline-block;
+  width: 0.52em; height: 1.02em;
+  margin-left: 2px; vertical-align: text-bottom;
+  background: var(--signal);
+  animation: blink 1.05s steps(2, end) infinite;
+}
+@keyframes blink { 0%,100% { opacity: 1 } 50% { opacity: 0 } }
+.skip {
+  margin-top: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dot.busy, .caret { animation: none; opacity: 1; }
+}
+
+code.inline {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.88em;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 1px 4px;
+  white-space: pre-wrap;
+}
+
+.code {
+  margin: 11px 0;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--steel);
+  border-radius: 2px;
+  background: var(--inset);
+  overflow: hidden;
+}
+.codehead {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 9px;
+  border-bottom: 1px solid var(--line);
+  background: var(--raised);
+}
+.lang {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--steel); flex: 1 1 auto;
+}
+.copy {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); background: none; border: none; cursor: pointer;
+  padding: 2px 4px;
+}
+pre.code-pre {
+  margin: 0; padding: 11px; overflow-x: auto;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12.5px; line-height: 1.6; white-space: pre; color: var(--text);
+}
+
+.cont {
+  margin-top: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--signal);
+  background: none;
+  border: 1px solid var(--signal);
+  border-radius: 2px;
+  padding: 8px 13px; cursor: pointer;
+}
+
+/* Leerer Zustand */
+.empty { padding: 34px 16px; }
+.emptyline {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 600; font-size: 21px; line-height: 1.3;
+  letter-spacing: -0.01em; margin: 0 0 6px;
+}
+.emptysub { color: var(--muted); font-size: 13.5px; margin: 0 0 20px; }
+.chips { display: flex; flex-direction: column; gap: 8px; }
+.chip {
+  text-align: left; width: 100%;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--steel);
+  border-radius: 2px;
+  padding: 11px; cursor: pointer;
+}
+
+/* Eingabe */
+.foot {
+  flex: 0 0 auto;
+  display: flex; align-items: flex-end; gap: 9px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+textarea.ta {
+  flex: 1 1 auto; resize: none;
+  max-height: 148px; min-height: 44px; height: 44px;
+  padding: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13.5px; line-height: 1.5;
+  color: var(--text);
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 2px; outline: none;
+}
+textarea.ta::placeholder { color: #5A646F; }
+textarea.ta:focus { border-color: var(--steel); }
+.send {
+  flex: 0 0 auto;
+  font-family: 'Archivo', sans-serif;
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: #fff; background: var(--signal);
+  border: none; border-radius: 2px;
+  padding: 0 16px; height: 44px; cursor: pointer;
+}
+.send:disabled { background: var(--raised); color: #4E5764; }
+
+/* Schluessel-Seite */
+.gate { flex: 1 1 auto; overflow-y: auto; padding: 40px 20px; }
+.gatetitle { font-family: 'Archivo', sans-serif; font-weight: 600; font-size: 21px; margin: 0 0 8px; }
+.gatetext { color: var(--muted); font-size: 13.5px; margin: 0; }
+input.key {
+  width: 100%;
+  margin: 20px 0 12px;
+  padding: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: 2px; outline: none;
+}
+input.key:focus { border-color: var(--steel); }
+.gatego {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: #fff; background: var(--signal);
+  border: none; border-radius: 2px;
+  padding: 13px 20px; cursor: pointer;
+}
+.gatego:disabled { background: var(--raised); color: #4E5764; }
+.hint {
+  margin-top: 24px; padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 12px; color: var(--muted);
+}
+.hidden { display: none !important; }
+:focus-visible { outline: 2px solid var(--steel); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<header class="head">
+  <div>
+    <h1 class="mark">Werkstatt</h1>
+    <p class="sub" id="subline">Gemini Flash</p>
+  </div>
+  <div class="spacer"></div>
+  <div class="tell" id="tell"><span class="dot" id="dot"></span><span id="status">bereit</span></div>
+  <button class="btn" id="btnNew" disabled>Neu</button>
+  <button class="btn" id="btnKey">Schlüssel</button>
+</header>
+
+<!-- Schluessel-Seite -->
+<div class="gate" id="gate">
+  <h2 class="gatetitle">Gemini-Schlüssel eintragen</h2>
+  <p class="gatetext">Kostenlos in Google AI Studio unter „API keys". Keine Kreditkarte nötig.</p>
+  <input class="key" id="keyInput" type="password" placeholder="AIza…" autocomplete="off" spellcheck="false">
+  <button class="gatego" id="keyGo" disabled>Starten</button>
+  <p class="hint">Der Schlüssel wird nur auf diesem Gerät gespeichert und nirgends sonst hingeschickt außer an Google.</p>
+</div>
+
+<!-- Chat -->
+<main class="log hidden" id="log"></main>
+
+<footer class="foot hidden" id="foot">
+  <textarea class="ta" id="ta" rows="1" placeholder="Code, Fehler, Frage …"></textarea>
+  <button class="send" id="send" disabled>Los</button>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var MODEL = "gemini-2.5-flash";
+  var BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
+  var MAX_TOKENS = 2048;
+  var TICK_MS = 28;
+  var STORE_KEY = "werkstatt.key";
+
+  var SYSTEM =
+    "Du bist der Assistent in der App WERKSTATT — ein Programmier-Assistent für einen " +
+    "deutschsprachigen Entwickler. Er arbeitet viel mit C#, XML-Konfigurationsdateien und " +
+    "Game-Modding (GTA 5 / LSPDFR, Cities: Skylines 2), aber auch mit anderen Sprachen und Themen.\n\n" +
+    "Regeln:\n" +
+    "- Antworte auf Deutsch, außer er schreibt in einer anderen Sprache.\n" +
+    "- Sofort zum Punkt. Keine Einleitung, kein Lob, keine Zusammenfassung am Ende.\n" +
+    "- Code immer in Fenced-Blöcken mit Sprachangabe.\n" +
+    "- Kurz halten. Der Bildschirm ist ein Handy.\n" +
+    "- Bei Mehrdeutigkeit: begründete Annahme treffen und in einem Satz nennen, statt zurückzufragen.\n" +
+    "- Bei Fehlermeldungen: erst die Ursache in einem Satz, dann der Fix.";
+
+  var CHIPS = [
+    "Erklär mir NullReferenceException im ScriptHookV-Kontext",
+    "C#-Methode, die eine XML-Datei einliest und Werte ändert",
+    "Regex, das Zeitstempel aus einer Logdatei zieht"
+  ];
+
+  // ---- Zustand ----
+  var apiKey = "";
+  var messages = [];      // { role: user | assistant | error, content }
+  var busy = false;
+  var failed = false;
+  var truncated = false;
+
+  var target = "";        // vollstaendig empfangener Text
+  var shownLen = 0;       // davon angezeigt
+  var done = false;
+  var mode = "new";
+  var timer = null;
+  var liveEl = null;
+  var codeStore = [];
+
+  // ---- Elemente ----
+  var elGate = document.getElementById("gate");
+  var elLog = document.getElementById("log");
+  var elFoot = document.getElementById("foot");
+  var elTa = document.getElementById("ta");
+  var elSend = document.getElementById("send");
+  var elDot = document.getElementById("dot");
+  var elStatus = document.getElementById("status");
+  var elBtnNew = document.getElementById("btnNew");
+  var elBtnKey = document.getElementById("btnKey");
+  var elKeyInput = document.getElementById("keyInput");
+  var elKeyGo = document.getElementById("keyGo");
+
+  // ---- Hilfsfunktionen ----
+  function esc(s) {
+    return String(s).replace(/[&<>]/g, function (c) {
+      return c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;";
+    });
+  }
+
+  function inlineFmt(t) {
+    return t
+      .replace(/`([^`\n]+)`/g, '<code class="inline">$1</code>')
+      .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  }
+
+  function parseSegments(text) {
+    var out = [];
+    var re = /```([a-zA-Z0-9_+#.-]*)\n?([\s\S]*?)```/g;
+    var last = 0;
+    var m;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) out.push({ type: "text", value: text.slice(last, m.index) });
+      out.push({ type: "code", lang: m[1] || "code", value: m[2].replace(/\n$/, "") });
+      last = re.lastIndex;
+    }
+    var rest = text.slice(last);
+    var open = rest.indexOf("```");
+    if (open !== -1) {
+      if (open > 0) out.push({ type: "text", value: rest.slice(0, open) });
+      var after = rest.slice(open + 3);
+      var nl = after.indexOf("\n");
+      var lang = nl === -1 ? after.trim() : after.slice(0, nl).trim();
+      var code = nl === -1 ? "" : after.slice(nl + 1);
+      out.push({ type: "code", lang: lang || "code", value: code, partial: true });
+    } else if (rest.length) {
+      out.push({ type: "text", value: rest });
+    }
+    return out;
+  }
+
+  function renderBody(text, live) {
+    var segs = parseSegments(text);
+    var html = "";
+    for (var i = 0; i < segs.length; i++) {
+      var s = segs[i];
+      var isLast = i === segs.length - 1;
+      if (s.type === "code") {
+        var btn = "";
+        if (!live && !s.partial) {
+          codeStore.push(s.value);
+          btn = '<button class="copy" data-code="' + (codeStore.length - 1) + '">kopieren</button>';
+        }
+        html += '<div class="code"><div class="codehead"><span class="lang">' +
+                esc(s.lang) + "</span>" + btn + '</div><pre class="code-pre">' +
+                esc(s.value) + "</pre></div>";
+      } else {
+        html += inlineFmt(esc(s.value.replace(/^\n+|\n+$/g, "")));
+        if (live && isLast) html += '<span class="caret"></span>';
+      }
+    }
+    if (live && (segs.length === 0 || segs[segs.length - 1].type === "code")) {
+      html += '<span class="caret"></span>';
+    }
+    return html;
+  }
+
+  function makeEntry(role, content) {
+    var cls = role === "user" ? "user" : role === "error" ? "err" : "ai";
+    var label = role === "user" ? "Du" : role === "error" ? "Fehler" : "Werkstatt";
+    var art = document.createElement("article");
+    art.className = "entry " + cls;
+    var head = document.createElement("div");
+    head.className = "role";
+    head.textContent = label;
+    art.appendChild(head);
+    var bodyEl = document.createElement("div");
+    bodyEl.className = "body" + (role === "error" ? " err" : "");
+    if (role === "assistant") bodyEl.innerHTML = renderBody(content, false);
+    else bodyEl.textContent = content;
+    art.appendChild(bodyEl);
+    return art;
+  }
+
+  function scrollDown() {
+    elLog.scrollTop = elLog.scrollHeight;
+  }
+
+  function setStatus() {
+    elStatus.textContent = busy ? "arbeitet" : failed ? "fehler" : "bereit";
+    elDot.className = "dot" + (busy ? " busy" : failed ? " err" : "");
+    elBtnNew.disabled = busy || messages.length === 0;
+    elBtnKey.disabled = busy;
+    elSend.disabled = busy || !elTa.value.trim();
+  }
+
+  function showEmpty() {
+    var d = document.createElement("div");
+    d.className = "empty";
+    var h = '<p class="emptyline">Frag was, dann läuft\'s.</p>' +
+            '<p class="emptysub">Code, Fehlermeldungen, Config-Dateien. ' +
+            'Antworten kommen kurz und mit kopierbaren Blöcken.</p><div class="chips">';
+    for (var i = 0; i < CHIPS.length; i++) {
+      h += '<button class="chip" data-chip="' + i + '">' + esc(CHIPS[i]) + "</button>";
+    }
+    h += "</div>";
+    d.innerHTML = h;
+    elLog.appendChild(d);
+  }
+
+  function redrawAll() {
+    elLog.innerHTML = "";
+    codeStore = [];
+    if (messages.length === 0 && !busy) {
+      showEmpty();
+      return;
+    }
+    for (var i = 0; i < messages.length; i++) {
+      var entry = makeEntry(messages[i].role, messages[i].content);
+      if (messages[i].role === "assistant" && i === messages.length - 1 && truncated && !busy) {
+        var b = document.createElement("button");
+        b.className = "cont";
+        b.textContent = "Weiterschreiben";
+        b.addEventListener("click", continueLast);
+        entry.appendChild(b);
+      }
+      elLog.appendChild(entry);
+    }
+    scrollDown();
+  }
+
+  function copyText(t) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(t).then(function () { return true; },
+        function () { return legacyCopy(t); });
+    }
+    return Promise.resolve(legacyCopy(t));
+  }
+
+  function legacyCopy(t) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = t;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ---- Tipp-Animation ----
+  function stopTicker() {
+    if (timer) { clearInterval(timer); timer = null; }
+  }
+
+  function instantMode() {
+    try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; }
+    catch (e) { return false; }
+  }
+
+  function startTicker() {
+    stopTicker();
+    var instant = instantMode();
+    timer = setInterval(function () {
+      var len = target.length;
+      if (shownLen < len) {
+        if (instant) shownLen = len;
+        else {
+          var remaining = len - shownLen;
+          shownLen += Math.min(Math.max(1, Math.ceil(remaining / 9)), remaining);
+        }
+        paintLive();
+      } else if (done) {
+        finish();
+      }
+    }, TICK_MS);
+  }
+
+  function paintLive() {
+    if (!liveEl) return;
+    var bodyEl = liveEl.querySelector(".body");
+    bodyEl.innerHTML = renderBody(target.slice(0, shownLen), true);
+    var sk = liveEl.querySelector(".skip");
+    if (shownLen < target.length) {
+      if (!sk) {
+        sk = document.createElement("div");
+        sk.className = "skip";
+        sk.textContent = "Tippen zeigt alles sofort";
+        liveEl.appendChild(sk);
+      }
+    } else if (sk) {
+      liveEl.removeChild(sk);
+    }
+    scrollDown();
+  }
+
+  function finish() {
+    stopTicker();
+    var text = target;
+    if (mode === "continue") {
+      for (var i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === "assistant") {
+          messages[i].content += text;
+          break;
+        }
+      }
+    } else {
+      messages.push({ role: "assistant", content: text });
+    }
+    target = "";
+    shownLen = 0;
+    liveEl = null;
+    busy = false;
+    setStatus();
+    redrawAll();
+  }
+
+  function fail(msg) {
+    stopTicker();
+    target = "";
+    shownLen = 0;
+    liveEl = null;
+    busy = false;
+    failed = true;
+    messages.push({ role: "error", content: msg });
+    setStatus();
+    redrawAll();
+  }
+
+  // ---- Gemini ----
+  function buildContents(extra) {
+    var list = [];
+    for (var i = 0; i < messages.length; i++) {
+      var m = messages[i];
+      if (m.role !== "user" && m.role !== "assistant") continue;
+      list.push({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }]
+      });
+    }
+    if (extra) list.push({ role: "user", parts: [{ text: extra }] });
+    return list;
+  }
+
+  function reqBody(contents) {
+    return JSON.stringify({
+      system_instruction: { parts: [{ text: SYSTEM }] },
+      contents: contents,
+      generationConfig: {
+        maxOutputTokens: MAX_TOKENS,
+        temperature: 0.7,
+        thinkingConfig: { thinkingBudget: 0 }
+      }
+    });
+  }
+
+  function reqHeaders() {
+    return { "Content-Type": "application/json", "x-goog-api-key": apiKey };
+  }
+
+  function readChunk(obj) {
+    var text = "";
+    var c = obj && obj.candidates && obj.candidates[0];
+    if (c) {
+      var parts = c.content && c.content.parts;
+      if (parts && parts.length) {
+        for (var i = 0; i < parts.length; i++) {
+          if (typeof parts[i].text === "string") text += parts[i].text;
+        }
+      }
+      if (c.finishReason === "MAX_TOKENS") truncated = true;
+    }
+    return text;
+  }
+
+  function streamRequest(contents) {
+    return fetch(BASE + MODEL + ":streamGenerateContent?alt=sse", {
+      method: "POST", headers: reqHeaders(), body: reqBody(contents)
+    }).then(function (res) {
+      if (!res.ok) {
+        return res.json().then(function (j) {
+          var e = new Error((j && j.error && j.error.message) || "HTTP " + res.status);
+          e.fatal = true;
+          throw e;
+        }, function () {
+          var e = new Error("HTTP " + res.status);
+          e.fatal = true;
+          throw e;
+        });
+      }
+      if (!res.body || !res.body.getReader) throw new Error("kein Stream");
+
+      var reader = res.body.getReader();
+      var dec = new TextDecoder();
+      var buf = "";
+      var text = "";
+
+      function pump() {
+        return reader.read().then(function (r) {
+          if (r.done) {
+            if (!text) throw new Error("leere Antwort");
+            return text;
+          }
+          buf += dec.decode(r.value, { stream: true });
+          var lines = buf.split("\n");
+          buf = lines.pop();
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            if (line.indexOf("data:") !== 0) continue;
+            var payload = line.slice(5).trim();
+            if (!payload) continue;
+            try {
+              text += readChunk(JSON.parse(payload));
+              target = text;
+            } catch (e) { /* Teilstueck, weiter */ }
+          }
+          return pump();
+        });
+      }
+      return pump();
+    });
+  }
+
+  function plainRequest(contents) {
+    return fetch(BASE + MODEL + ":generateContent", {
+      method: "POST", headers: reqHeaders(), body: reqBody(contents)
+    }).then(function (res) {
+      return res.json().then(function (data) {
+        if (!res.ok || (data && data.error)) {
+          throw new Error((data && data.error && data.error.message) || "HTTP " + res.status);
+        }
+        var text = readChunk(data);
+        if (!text) throw new Error("leere Antwort");
+        target = text;
+        return text;
+      });
+    });
+  }
+
+  function run(contents, m) {
+    mode = m;
+    target = "";
+    shownLen = 0;
+    done = false;
+    truncated = false;
+    failed = false;
+    busy = true;
+    setStatus();
+
+    redrawAll();
+    liveEl = makeEntry("assistant", "");
+    liveEl.addEventListener("click", function () {
+      shownLen = target.length;
+      paintLive();
+    });
+    elLog.appendChild(liveEl);
+    paintLive();
+    startTicker();
+
+    streamRequest(contents).then(function () {
+      done = true;
+    }, function (e1) {
+      if (e1 && e1.fatal) { fail(e1.message); return; }
+      target = "";
+      shownLen = 0;
+      return plainRequest(contents).then(function () {
+        done = true;
+      }, function (e2) {
+        fail((e2 && e2.message) || "unbekannter Fehler");
+      });
+    });
+  }
+
+  function send(textArg) {
+    var value = (typeof textArg === "string" ? textArg : elTa.value).trim();
+    if (!value || busy) return;
+    messages.push({ role: "user", content: value });
+    elTa.value = "";
+    elTa.style.height = "44px";
+    run(buildContents(), "new");
+  }
+
+  function continueLast() {
+    if (busy) return;
+    run(buildContents("Mach exakt da weiter, wo du aufgehört hast. Keine Wiederholung, keine Einleitung."), "continue");
+  }
+
+  // ---- Schluessel ----
+  function loadKey() {
+    try { return localStorage.getItem(STORE_KEY) || ""; } catch (e) { return ""; }
+  }
+  function saveKey(k) {
+    try { localStorage.setItem(STORE_KEY, k); } catch (e) {}
+  }
+  function clearKey() {
+    try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+  }
+
+  function openChat() {
+    elGate.classList.add("hidden");
+    elLog.classList.remove("hidden");
+    elFoot.classList.remove("hidden");
+    setStatus();
+    redrawAll();
+  }
+
+  function openGate() {
+    elGate.classList.remove("hidden");
+    elLog.classList.add("hidden");
+    elFoot.classList.add("hidden");
+    elKeyInput.value = "";
+    elKeyGo.disabled = true;
+  }
+
+  // ---- Ereignisse ----
+  elKeyInput.addEventListener("input", function () {
+    elKeyGo.disabled = !elKeyInput.value.trim();
+  });
+  elKeyInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && elKeyInput.value.trim()) elKeyGo.click();
+  });
+  elKeyGo.addEventListener("click", function () {
+    apiKey = elKeyInput.value.trim();
+    saveKey(apiKey);
+    openChat();
+  });
+
+  elBtnKey.addEventListener("click", function () {
+    if (busy) return;
+    apiKey = "";
+    clearKey();
+    messages = [];
+    failed = false;
+    truncated = false;
+    openGate();
+  });
+
+  elBtnNew.addEventListener("click", function () {
+    if (busy) return;
+    messages = [];
+    failed = false;
+    truncated = false;
+    setStatus();
+    redrawAll();
+  });
+
+  elTa.addEventListener("input", function () {
+    elTa.style.height = "auto";
+    elTa.style.height = Math.min(elTa.scrollHeight, 148) + "px";
+    setStatus();
+  });
+
+  elSend.addEventListener("click", function () { send(); });
+
+  elLog.addEventListener("click", function (ev) {
+    var t = ev.target;
+    if (t && t.classList && t.classList.contains("copy")) {
+      ev.stopPropagation();
+      var idx = parseInt(t.getAttribute("data-code"), 10);
+      var code = codeStore[idx];
+      if (typeof code === "string") {
+        copyText(code).then(function (ok) {
+          t.textContent = ok ? "kopiert" : "fehlgeschlagen";
+          setTimeout(function () { t.textContent = "kopieren"; }, 1600);
+        });
+      }
+      return;
+    }
+    if (t && t.classList && t.classList.contains("chip")) {
+      send(CHIPS[parseInt(t.getAttribute("data-chip"), 10)]);
+    }
+  });
+
+  // ---- Start ----
+  apiKey = loadKey();
+  if (apiKey) openChat(); else openGate();
+})();
+</script>
+</body>
+</html>
